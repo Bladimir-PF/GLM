@@ -1,0 +1,193 @@
+> m1 = lm(score ~ 1)
+> summary(m1)
+
+Call:
+lm(formula = score ~ 1)
+
+Residuals:
+   Min     1Q Median     3Q    Max 
+-26.65  -5.65   0.35   6.60  26.35 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  72.6500     0.6675   108.8   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 9.439 on 199 degrees of freedom
+
+> m2 = lm(score ~ 1 + enthusiasm + exp_m + g2 + g3 + g4)
+> summary(m2)
+
+Call:
+lm(formula = score ~ 1 + enthusiasm + exp_m + g2 + g3 + g4)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-9.4106 -2.0518  0.0675  2.2193 10.0082 
+
+Coefficients:
+            Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  75.0512     0.4702 159.601  < 2e-16 ***
+enthusiasm   -4.3558     0.2086 -20.879  < 2e-16 ***
+exp_m        -2.7343     0.1643 -16.644  < 2e-16 ***
+g2          -10.7775     0.6626 -16.265  < 2e-16 ***
+g3            5.3930     0.6569   8.210 3.04e-14 ***
+g4           -4.7124     0.6520  -7.227 1.10e-11 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 3.257 on 194 degrees of freedom
+Multiple R-squared:  0.8839,	Adjusted R-squared:  0.8809 
+F-statistic: 295.4 on 5 and 194 DF,  p-value: < 2.2e-16
+
+> m3 = lm(score ~ 1 + enthusiasm + exp_m + g2 + g3 + g4 + exp_m:g2 + 
++ exp_m:g3 + exp_m:g4)
+> summary(m3)
+
+Call:
+lm(formula = score ~ 1 + enthusiasm + exp_m + g2 + g3 + g4 + 
+    exp_m:g2 + exp_m:g3 + exp_m:g4)
+
+Residuals:
+    Min      1Q  Median      3Q     Max 
+-6.8070 -1.7466  0.1639  1.9815  7.4372 
+
+Coefficients:
+             Estimate Std. Error t value Pr(>|t|)    
+(Intercept)  75.02849    0.38160 196.616  < 2e-16 ***
+enthusiasm   -4.49896    0.17064 -26.366  < 2e-16 ***
+exp_m        -1.91560    0.25596  -7.484 2.57e-12 ***
+g2          -10.06888    0.54233 -18.566  < 2e-16 ***
+g3            5.41945    0.53549  10.120  < 2e-16 ***
+g4           -4.74002    0.52929  -8.955 3.02e-16 ***
+exp_m:g2     -4.13682    0.44179  -9.364  < 2e-16 ***
+exp_m:g3     -0.77428    0.34620  -2.237   0.0265 *  
+exp_m:g4     -0.05052    0.36269  -0.139   0.8894    
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+Residual standard error: 2.643 on 191 degrees of freedom
+Multiple R-squared:  0.9247,	Adjusted R-squared:  0.9216 
+F-statistic: 293.4 on 8 and 191 DF,  p-value: < 2.2e-16
+
+> summary(glht(model = m3, linfct = rbind(`Exp Slope at g = 2` = c(0, 
++ 0, 1, 0, 0, 0, 1, 0, 0), `Exp Slope at g = 3` = c(0, 0, 1, 
++ 0, 0, 0, 0, 1, 0), `Exp Slope at g = 4` = c(0, 0, 1, 0, 0, 
++ 0, 0, 0, 1))), test = adjusted("none"))
+
+	 Simultaneous Tests for General Linear Hypotheses
+
+Fit: lm(formula = score ~ 1 + enthusiasm + exp_m + g2 + g3 + g4 + 
+    exp_m:g2 + exp_m:g3 + exp_m:g4)
+
+Linear Hypotheses:
+                        Estimate Std. Error t value Pr(>|t|)    
+Exp Slope at g = 2 == 0  -6.0524     0.3615 -16.744  < 2e-16 ***
+Exp Slope at g = 3 == 0  -2.6899     0.2343 -11.478  < 2e-16 ***
+Exp Slope at g = 4 == 0  -1.9661     0.2561  -7.676 8.26e-13 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+(Adjusted p values reported -- none method)
+
+> summary(glht(model = m3, linfct = rbind(`Ctrl Slope vs g = 2 at exp = 4` = c(0, 
++ 0, 0, 1, 0, 0, 0, 0, 0), `Ctrl Slope vs g = 3 at exp = 4` = c(0, 
++ 0, 0, 0, 1, 0, 0, 0, 0))), test = adjusted("none"))
+
+	 Simultaneous Tests for General Linear Hypotheses
+
+Fit: lm(formula = score ~ 1 + enthusiasm + exp_m + g2 + g3 + g4 + 
+    exp_m:g2 + exp_m:g3 + exp_m:g4)
+
+Linear Hypotheses:
+                                    Estimate Std. Error t value Pr(>|t|)    
+Ctrl Slope vs g = 2 at exp = 4 == 0 -10.0689     0.5423  -18.57   <2e-16 ***
+Ctrl Slope vs g = 3 at exp = 4 == 0   5.4194     0.5355   10.12   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+(Adjusted p values reported -- none method)
+
+> summary(glht(model = m3, linfct = rbind(`g = 2 Slope vs g = 4 at exp = 4` = c(0, 
++ 0, 0, -1, 0, 1, 0, 0, 0), `g = 3 Slope vs g = 4 at exp = 4` = c(0, 
++ 0, 0, 0, -1, 1, 0, 0, 0))), test = adjusted("none"))
+
+	 Simultaneous Tests for General Linear Hypotheses
+
+Fit: lm(formula = score ~ 1 + enthusiasm + exp_m + g2 + g3 + g4 + 
+    exp_m:g2 + exp_m:g3 + exp_m:g4)
+
+Linear Hypotheses:
+                                     Estimate Std. Error t value Pr(>|t|)    
+g = 2 Slope vs g = 4 at exp = 4 == 0   5.3289     0.5322   10.01   <2e-16 ***
+g = 3 Slope vs g = 4 at exp = 4 == 0 -10.1595     0.5251  -19.35   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+(Adjusted p values reported -- none method)
+
+> summary(glht(model = m3, linfct = rbind(`Interac exp ctrl and g = 2` = c(0, 
++ 0, 0, 0, 0, 0, 1, 0, 0), `Interac exp ctrl and g = 3` = c(0, 
++ 0, 0, 0, 0, 0, 0, 1, 0), `Interac exp g = 2 and g = 4` = c(0, 
++ 0, 0, 0, 0, 0, -1, 0, 1), `Interac exp g = 3 and g = 4` = c(0, 
++ 0, 0, 0, 0, 0, 0, -1, 1))), test = adjusted("none"))
+
+	 Simultaneous Tests for General Linear Hypotheses
+
+Fit: lm(formula = score ~ 1 + enthusiasm + exp_m + g2 + g3 + g4 + 
+    exp_m:g2 + exp_m:g3 + exp_m:g4)
+
+Linear Hypotheses:
+                                 Estimate Std. Error t value Pr(>|t|)    
+Interac exp ctrl and g = 2 == 0   -4.1368     0.4418  -9.364   <2e-16 ***
+Interac exp ctrl and g = 3 == 0   -0.7743     0.3462  -2.237   0.0265 *  
+Interac exp g = 2 and g = 4 == 0   4.0863     0.4442   9.200   <2e-16 ***
+Interac exp g = 3 and g = 4 == 0   0.7238     0.3480   2.080   0.0389 *  
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+(Adjusted p values reported -- none method)
+
+> groupF = glht(model = m2, linfct = c("enthusiasm=0", "exp_m=0", 
++ "g2=0", "g3=0", "g4=0"))
+> summary(groupF, test = Ftest())
+
+	 General Linear Hypotheses
+
+Linear Hypotheses:
+                Estimate
+enthusiasm == 0   -4.356
+exp_m == 0        -2.734
+g2 == 0          -10.778
+g3 == 0            5.393
+g4 == 0           -4.712
+
+Global Test:
+      F DF1 DF2    Pr(>F)
+1 295.4   5 194 1.176e-88
+> dummyF = glht(model = m2, linfct = c("g2=0", "g3=0", "g4=0"))
+> summary(dummyF, test = Ftest())
+
+	 General Linear Hypotheses
+
+Linear Hypotheses:
+        Estimate
+g2 == 0  -10.778
+g3 == 0    5.393
+g4 == 0   -4.712
+
+Global Test:
+      F DF1 DF2    Pr(>F)
+1 219.2   3 194 4.757e-62
+> dummyF2 = glht(model = m3, linfct = c("exp_m:g2=0", "exp_m:g3=0", 
++ "exp_m:g4=0"))
+> summary(dummyF2, test = Ftest())
+
+	 General Linear Hypotheses
+
+Linear Hypotheses:
+              Estimate
+exp_m:g2 == 0 -4.13682
+exp_m:g3 == 0 -0.77428
+exp_m:g4 == 0 -0.05052
+
+Global Test:
+      F DF1 DF2    Pr(>F)
+1 34.55   3 191 6.964e-18

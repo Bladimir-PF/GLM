@@ -1,0 +1,118 @@
+> m1 <- glm(Job ~ Npubs + Nposters, family = binomial, data = data)
+> summary(m1)
+
+Call:
+glm(formula = Job ~ Npubs + Nposters, family = binomial, data = data)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-2.6188   0.1501   0.3684   0.5626   1.5328  
+
+Coefficients:
+            Estimate Std. Error z value Pr(>|z|)    
+(Intercept) -1.54534    0.28217  -5.477 4.33e-08 ***
+Npubs        0.74014    0.07879   9.394  < 2e-16 ***
+Nposters     0.39617    0.05560   7.125 1.04e-12 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 879.34  on 999  degrees of freedom
+Residual deviance: 708.78  on 997  degrees of freedom
+AIC: 714.78
+
+Number of Fisher Scoring iterations: 6
+
+> m1 <- glm(Job ~ Npubs + Nposters, family = binomial, data = data)
+> summary(m1)
+
+Call:
+glm(formula = Job ~ Npubs + Nposters, family = binomial, data = data)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-2.6188   0.1501   0.3684   0.5626   1.5328  
+
+Coefficients:
+            Estimate Std. Error z value Pr(>|z|)    
+(Intercept) -1.54534    0.28217  -5.477 4.33e-08 ***
+Npubs        0.74014    0.07879   9.394  < 2e-16 ***
+Nposters     0.39617    0.05560   7.125 1.04e-12 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 879.34  on 999  degrees of freedom
+Residual deviance: 708.78  on 997  degrees of freedom
+AIC: 714.78
+
+Number of Fisher Scoring iterations: 6
+
+> m1 <- glm(Job ~ Npubs + Nposters, family = binomial(link = "logit"), 
++ data = data)
+> summary(m1)
+
+Call:
+glm(formula = Job ~ Npubs + Nposters, family = binomial(link = "logit"), 
+    data = data)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-2.6188   0.1501   0.3684   0.5626   1.5328  
+
+Coefficients:
+            Estimate Std. Error z value Pr(>|z|)    
+(Intercept) -1.54534    0.28217  -5.477 4.33e-08 ***
+Npubs        0.74014    0.07879   9.394  < 2e-16 ***
+Nposters     0.39617    0.05560   7.125 1.04e-12 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 879.34  on 999  degrees of freedom
+Residual deviance: 708.78  on 997  degrees of freedom
+AIC: 714.78
+
+Number of Fisher Scoring iterations: 6
+
+> m0 <- glm(Job ~ 1, data = data, family = binomial(link = "logit"))
+> summary(m0)
+
+Call:
+glm(formula = Job ~ 1, family = binomial(link = "logit"), data = data)
+
+Deviance Residuals: 
+    Min       1Q   Median       3Q      Max  
+-1.9145   0.5905   0.5905   0.5905   0.5905  
+
+Coefficients:
+            Estimate Std. Error z value Pr(>|z|)    
+(Intercept)  1.65823    0.08626   19.22   <2e-16 ***
+---
+Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+(Dispersion parameter for binomial family taken to be 1)
+
+    Null deviance: 879.34  on 999  degrees of freedom
+Residual deviance: 879.34  on 999  degrees of freedom
+AIC: 881.34
+
+Number of Fisher Scoring iterations: 3
+
+> m0_probs <- 1/(1 + exp(-1 * coef(m0)))
+> summary(m0_probs)
+   Min. 1st Qu.  Median    Mean 3rd Qu.    Max. 
+   0.84    0.84    0.84    0.84    0.84    0.84 
+> m0_probs <- 1/(1 + exp(-1 * coef(m0)))
+> m0_probs
+(Intercept) 
+       0.84 
+> table(data$Job)
+
+  0   1 
+160 840 
+> mean(data$Job)
+[1] 0.84

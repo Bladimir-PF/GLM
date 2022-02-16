@@ -1,0 +1,125 @@
+---
+title: "HW02"
+author: "Geraldo B. Padilla F."
+date: "16-02-2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# HW02 using R
+```{r options, echo=FALSE, message=FALSE}
+#set width of output and number of digits to be printed
+options("width"=120, "digits"=8)
+# turn off stars for different alpha levels
+options(show.signif.stars=FALSE)
+# Use this to turn off scientific notation: 
+# "fixed notation will be preferred unless it is more than 'scipen' digits wide"
+options(scipen=999)
+```
+
+## Check to see if packages are downloaded, install if not, then load
+```{r packages, message=FALSE}
+library(readxl) # To import xls or xlsx data as table
+library(expss) # To add variable and value labels, sorting
+library(psych) # To add descriptive summary functions
+library(multcomp) # To do glht linear combinations in GLMs
+library(margins) # To get predicted values like Stata does
+library(TeachingDemos) # To create text output files
+library(dplyr)
+library(multcomp)
+```
+
+## Define variables for working directory and data name
+
+```{r data.set}
+setwd('C:/Users/Lenovo/OneDrive - University of Iowa/PhD portfolio/2. Courses/Spring 2022/PSQF62700001 Generalized Linear Models (Lesa Hoffman)/4. Homeworks/HM02')
+data <- data.frame(read_excel("HW02_01445225.xlsx"))
+```
+
+## Here are the variable labels (not to be included in data used)
+- PersonID=   "PersonID: Person ID"
+- Npubs=      "Npubs: Number of Published Research Papers"
+- Nposters=   "Nposters: Number of Conference Posters"
+- QuantLevel= "QuantLevel: 1=Low, 2=Medium, 3=High"
+- Job=        "Job: 0=No Job Offer, 1=Received Job Offer"
+
+## Center/recode predictors goes here
+
+```{r centering}
+data = data%>%
+  mutate(
+    Medium = ifelse(QuantLevel == 2, 1, 0),
+    High = ifelse(QuantLevel == 3, 1, 0))
+```
+
+## Create fake people for use in generating predicted outcomes
+
+```{r fake.people}
+FP = data.frame(
+  gpa3 = c(-1,0,1,-1,0,1,-1,0,1,-1,0,1),
+  parD = c( 0,0,0, 0,0,0, 1,1,1, 1,1,1),
+  priv = c( 0,0,0, 1,1,1, 0,0,0, 1,1,1))
+```
+
+## Your code to estimate models goes here
+
+```{r empty.model}
+m0 <- glm(Job ~ 1, data = data, family = binomial(link = 'logit'));summary(m0)
+m0_probs <- 1/(1+exp(-1*coef(m0))); m0_probs
+```
+
+```{r models}
+(m1 <- glm(Job ~ 1 + Npubs + Nposters, family = binomial(link = 'logit'), data = data))
+BIC(m1) #get BIC too
+(m2 <- glm(Job ~ 1 + Npubs + Nposters + Medium + High, data = data, family = binomial(link = 'logit')))
+```
+
+
+```{r odds}
+#95% CIs
+exp(cbind(OR = coef(m1))) #for m1
+exp(cbind(OR = coef(m2)))
+```
+
+## Multiv Wald Test
+
+```{r wald.tests}
+wald_m1 = glht(m1, linfct = c('Npubs=0', 'Nposters=0'))
+#summary(wald_m1, test = Ftest()) # Joint F-test instead of separate
+summary(wald_m1, test = Chisqtest()) # Joint chi-square test
+
+wald_m2 <- glht(m2, linfct = c('Npubs=0', 'Nposters=0', 'Medium=0', 'High=0'))
+summary(wald_m2, test = Chisqtest())
+
+wald_improvement_m2 <- glht(m2, linfct = c('Medium=0', 'High=0'))
+summary(wald_improvement, test = Chisqtest())
+```
+
+## Main slopes
+```{r main.slopes}
+ms_m1 <- summary(glht(m1, linfct=rbind(
+  "Nposters vs. Npubs" = c(0,1,-1))), test=adjusted("none"))
+data.frame(OR=exp(ms_m1$test$coefficients)) #take the odds of the log diff.
+
+(ms_m2 <- summary(glht(m2, linfct = rbind(
+  'low vs. medium' = c(0,0,0,1,0),
+  'low vs. high' = c(0,0,0,0,1),
+  'medium vs. high' = c(0,0,0,-1,1),
+  'Nposters vs. Npubs' = c(0,1,-1,0,0))), test = adjusted('none')))
+data.frame(OR = exp(ms_m2$test$coefficients))
+```
+
+
+
+
+print("Yhat in logits for specific values of predictors") 
+Main2Logits = prediction(model=Model2Main, type="link",
+                         at=list(gpa3=-1:1,parD=0:1,priv=0:1))
+summary(Main2Logits)
+print("Yhat in probability for specific values of predictors") 
+Main2Probs = prediction(model=Model2Main, type="response", 
+                        at=list(gpa3=-1:1,parD=0:1,priv=0:1))
+summary(Main2Probs)
