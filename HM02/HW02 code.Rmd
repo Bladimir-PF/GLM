@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # HW02 using R
-```{r options, echo=FALSE, message=FALSE}
+```{r options, message=FALSE}
 #set width of output and number of digits to be printed
 options("width"=120, "digits"=8)
 # turn off stars for different alpha levels
@@ -48,7 +48,7 @@ data <- data.frame(read_excel("HW02_01445225.xlsx"))
 
 ## Center/recode predictors goes here
 
-```{r centering}
+```{r dummy}
 data = data%>%
   mutate(
     Medium = ifelse(QuantLevel == 2, 1, 0),
@@ -64,7 +64,7 @@ FP = data.frame(
   priv = c( 0,0,0, 1,1,1, 0,0,0, 1,1,1))
 ```
 
-## Your code to estimate models goes here
+## Models
 
 ```{r empty.model}
 m0 <- glm(Job ~ 1, data = data, family = binomial(link = 'logit'));summary(m0)
@@ -73,18 +73,21 @@ m0_probs <- 1/(1+exp(-1*coef(m0))); m0_probs
 
 ```{r models}
 (m1 <- glm(Job ~ 1 + Npubs + Nposters, family = binomial(link = 'logit'), data = data))
-BIC(m1) #get BIC too
+#BIC(m1) #get BIC too
+
 (m2 <- glm(Job ~ 1 + Npubs + Nposters + Medium + High, data = data, family = binomial(link = 'logit')))
+
+(m3 <- glm(Job ~ 1 + Npubs + Nposters + Medium + High + Npubs:Medium + Npubs:High, data = data, family = binomial(link = 'logit')))
 ```
 
-
+## Odds of the coefficients
 ```{r odds}
 #95% CIs
 exp(cbind(OR = coef(m1))) #for m1
 exp(cbind(OR = coef(m2)))
 ```
 
-## Multiv Wald Test
+## Multivariate Wald Test
 
 ```{r wald.tests}
 wald_m1 = glht(m1, linfct = c('Npubs=0', 'Nposters=0'))
@@ -95,11 +98,17 @@ wald_m2 <- glht(m2, linfct = c('Npubs=0', 'Nposters=0', 'Medium=0', 'High=0'))
 summary(wald_m2, test = Chisqtest())
 
 wald_improvement_m2 <- glht(m2, linfct = c('Medium=0', 'High=0'))
-summary(wald_improvement, test = Chisqtest())
+summary(wald_improvement_m2, test = Chisqtest())
+
+wald_m3 <- glht(m3, linfct = c('Npubs=0', 'Nposters=0', 'Medium=0', 'High=0', 'Npubs:Medium=0', 'Npubs:High=0'))
+summary(wald_m3, test = Chisqtest())
+
+wald_improvement_m3 <- glht(m3, linfct = c('Npubs:Medium=0', 'Npubs:High=0'))
+summary(wald_improvement_m3, test = Chisqtest())
 ```
 
-## Main slopes
-```{r main.slopes}
+## Main and Simples slopes
+```{r slopes}
 ms_m1 <- summary(glht(m1, linfct=rbind(
   "Nposters vs. Npubs" = c(0,1,-1))), test=adjusted("none"))
 data.frame(OR=exp(ms_m1$test$coefficients)) #take the odds of the log diff.
@@ -110,16 +119,31 @@ data.frame(OR=exp(ms_m1$test$coefficients)) #take the odds of the log diff.
   'medium vs. high' = c(0,0,0,-1,1),
   'Nposters vs. Npubs' = c(0,1,-1,0,0))), test = adjusted('none')))
 data.frame(OR = exp(ms_m2$test$coefficients))
+
+(sl_m3 <- summary(glht(m3, linfct = rbind(
+  'Npubs at Low (Intercept)' = c(0,1,0,0,0,0,0),
+  'Npubs at Medium' = c(0,1,0,0,0,1,0),
+  'Npubs at High' = c(0,1,0,0,0,0,1),
+  'Low (Intercept) vs. Medium' = c(0,0,0,0,0,1,0),
+  'Low (Intercept) vs. High' = c(0,0,0,0,0,0,1),
+  'Medium vs. High' = c(0,0,0,0,0,-1,1))), test = adjusted('none')))
+data.frame(OR = exp(sl_m3$test$coefficients))
 ```
 
+## Predicted probabilities
+```{r}
+# Yhat in logits for specific values of predictors
+#Main2Logits = prediction(model=Model2Main, type="link", at=list(gpa3=-1:1,parD=0:1,priv=0:1))
+#summary(Main2Logits)
 
-
-
-print("Yhat in logits for specific values of predictors") 
-Main2Logits = prediction(model=Model2Main, type="link",
-                         at=list(gpa3=-1:1,parD=0:1,priv=0:1))
-summary(Main2Logits)
-print("Yhat in probability for specific values of predictors") 
-Main2Probs = prediction(model=Model2Main, type="response", 
-                        at=list(gpa3=-1:1,parD=0:1,priv=0:1))
-summary(Main2Probs)
+# Yhat in probability for specific values of predictors
+Probs_low = prediction(m3, type="response",
+                        at=list(Npubs=c(2,4), Nposters=3, Medium=0, High=0))
+summary(Probs_low)
+Probs_medium = prediction(m3, type="response",
+                        at=list(Npubs=c(2,4), Nposters=3, Medium=1, High=0))
+summary(Probs_medium)
+Probs_high = prediction(m3, type="response",
+                        at=list(Npubs=c(2,4), Nposters=3, Medium=0, High=1))
+summary(Probs_high)
+```
