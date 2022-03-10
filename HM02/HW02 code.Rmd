@@ -72,12 +72,15 @@ m0_probs <- 1/(1+exp(-1*coef(m0))); m0_probs
 ```
 
 ```{r models}
-(m1 <- glm(Job ~ 1 + Npubs + Nposters, family = binomial(link = 'logit'), data = data))
+m1 <- glm(Job ~ 1 + Npubs + Nposters, family = binomial(link = 'logit'), data = data)
+summary(m1)
 #BIC(m1) #get BIC too
 
-(m2 <- glm(Job ~ 1 + Npubs + Nposters + Medium + High, data = data, family = binomial(link = 'logit')))
+m2 <- glm(Job ~ 1 + Npubs + Nposters + Medium + High, data = data, family = binomial(link = 'logit'))
+summary(m2)
 
-(m3 <- glm(Job ~ 1 + Npubs + Nposters + Medium + High + Npubs:Medium + Npubs:High, data = data, family = binomial(link = 'logit')))
+m3 <- glm(Job ~ 1 + Npubs + Nposters + Medium + High + Npubs:Medium + Npubs:High, data = data, family = binomial(link = 'logit'))
+summary(m3)
 ```
 
 ## Odds of the coefficients

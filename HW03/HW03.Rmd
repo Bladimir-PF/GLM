@@ -1,0 +1,99 @@
+---
+title: "HW03"
+author: "Geraldo B. Padilla F."
+date: "10-03-2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# HW03 using R
+
+Set width of output and number of digits to be printed
+```{r}
+options("width"=120, "digits"=8)
+```
+
+Turn off stars for different alpha levels
+```{r}
+options(show.signif.stars=FALSE)
+```
+
+Use this to turn off scientific notation: 
+"fixed notation will be preferred unless it is more than 'scipen' digits wide"
+```{r}
+options(scipen=9)
+```
+
+Check to see if packages are downloaded, install if not, then load  #####
+```{r, message=FALSE}
+library(readxl)
+library(expss)
+library(psych)
+library(multcomp)
+library(margins)
+library(VGAM)
+library(TeachingDemos)
+```
+
+Define variables for working directory and data name
+```{r}
+d1 <- data.frame(read_excel('HW03_01445225.xlsx'))
+```
+
+Here are the variable labels (not to be included in data used)
+
+- FamilyID=      "FamilyID: Family ID"
+- Income=        "Income: Annual Family Income in Dollars"
+- Care=          "Care: Need After-School Child Care (0=no, 1=yes)"
+- SchoolQuality= "SchoolQuality: 1=Low, 2=Medium, 3=High"
+- SchoolChoice=  "SchoolChoice: 1=Public, 2=Montessori, 3=Private"
+
+Your code to center/recode predictors goes here
+```{r}
+d1$Income_centered <- (d1$Income - mean(d1$Income))/10000
+```
+
+ordinal perceived school quality is predicted by additive effects of annual family income and need for after-school child care
+
+Your code to estimate models goes here
+```{r}
+m01 <- vglm(SchoolQuality~1, family = cumulative(link = 'logitlink', reverse = T, parallel = T), data = d1)
+summary(m01); AIC(m01); BIC(m01) # Get AIC and BIC too
+
+print("Convert logits to probability to check interpretation")
+m01Prob=1/(1+exp(-1*coefficients(m01))); m01Prob
+prop.table(table(d1$SchoolQuality))
+
+m1 <- vglm(SchoolQuality~1+ Income_centered + Care, family = cumulative(link = 'logitlink', reverse = T, parallel = T), data = d1)
+summary(m1)
+```
+
+Odds Ratios
+```{r}
+exp(cbind(OR = coefficients(m1), confint(m1)))
+```
+
+
+Open output text file -- run this last if you want to save output
+txtStart(file=paste0(filesave,"PSQF6270_HW03_Output.txt"))
+
+Close output text file
+txtStop()
+
+
+print("Multiv Wald Test of Model R2 -- does not match SAS and STATA")
+POR2 = glht(model=Model3PO, linfct=c("gpa3=0","parD=0","priv=0"))
+summary(POR2, test=Chisqtest()) # Joint chi-square test 
+
+print("Get Yhat for specific values of predictors in fake people") 
+print("Y column = predicted yhat, Yprob = predicted probability")
+PredPO = data.frame(FP, Y=predict(object=Model3PO, newdata=FP, type="link"),
+                    Yprob=predict(object=Model3PO, newdata=FP, type="response")) 
+
+print("Rename columns into something meaningful")
+names(PredPO)[names(PredPO)=='Y.logitlink.P.Y..2..']<-'YlogitGE0'
+names(PredPO)[names(PredPO)=='Y.logitlink.P.Y..3..']<-'YlogitGE1'
+PredPO
