@@ -36,6 +36,7 @@ library(multcomp)
 library(margins)
 library(VGAM)
 library(TeachingDemos)
+library(dplyr)
 ```
 
 Define variables for working directory and data name
@@ -53,40 +54,63 @@ Here are the variable labels (not to be included in data used)
 
 Your code to center/recode predictors goes here
 ```{r}
-d1$Income_centered <- (d1$Income - mean(d1$Income))/10000
+mean(d1$Income)
+d1$Income_centered <- (d1$Income - 50000)/10000
+count(d1, SchoolQuality)
 ```
 
-ordinal perceived school quality is predicted by additive effects of annual family income and need for after-school child care
+Ordinal perceived school quality is predicted by additive effects of annual family income and need for after-school child care
 
-Your code to estimate models goes here
+Your code to estimate models goes here:
+
+Ordinal outcome:
 ```{r}
+#model subtracting 1 to the outcome variable, the result is the same
+d1%>%
+mutate(school = SchoolQuality - 1)%>%
+  vglm(school~1, family = cumulative(link = 'logitlink', reverse = T, parallel = T), data = .)%>%
+  summary()
+
 m01 <- vglm(SchoolQuality~1, family = cumulative(link = 'logitlink', reverse = T, parallel = T), data = d1)
 summary(m01); AIC(m01); BIC(m01) # Get AIC and BIC too
 
-print("Convert logits to probability to check interpretation")
+#comparing the observed and model implied means(probs)
 m01Prob=1/(1+exp(-1*coefficients(m01))); m01Prob
 prop.table(table(d1$SchoolQuality))
 
 m1 <- vglm(SchoolQuality~1+ Income_centered + Care, family = cumulative(link = 'logitlink', reverse = T, parallel = T), data = d1)
 summary(m1)
+
+m2 <- vglm(SchoolQuality~1+Income_centered+Care, family = cumulative(link = 'logitlink', reverse = T, parallel = F), data = d1)
+summary(m2)
 ```
+
+Nominal outcome:
+```{r}
+prop.table(table(d1$SchoolChoice))
+m3_empty <- vglm(SchoolChoice~1, family=multinomial(refLevel = 1), reverse=TRUE, data = d1)
+1/(1+exp(-1*coefficients(m3_empty)))
+.248/(.659+.248)
+.093/(.659+0.093)
+
+m3 <- vglm(SchoolChoice~1+Income_centered+Care, family = multinomial(refLevel = 1), reverse = T, data = d1)
+summary(m3)
+```
+
 
 Odds Ratios
 ```{r}
 exp(cbind(OR = coefficients(m1), confint(m1)))
+exp(cbind(OR = coefficients(m2), confint(m2)))
+```
+
+Multiv Wald Test of Model R2
+```{r}
+mul = glht(model=Model3PO, linfct=c("gpa3=0","parD=0","priv=0"))
+summary(POR2, test=Chisqtest()) # Joint chi-square test 
 ```
 
 
-Open output text file -- run this last if you want to save output
-txtStart(file=paste0(filesave,"PSQF6270_HW03_Output.txt"))
-
-Close output text file
-txtStop()
-
-
-print("Multiv Wald Test of Model R2 -- does not match SAS and STATA")
-POR2 = glht(model=Model3PO, linfct=c("gpa3=0","parD=0","priv=0"))
-summary(POR2, test=Chisqtest()) # Joint chi-square test 
 
 print("Get Yhat for specific values of predictors in fake people") 
 print("Y column = predicted yhat, Yprob = predicted probability")
