@@ -88,8 +88,11 @@ summary(m2)
 Nominal outcome:
 ```{r}
 prop.table(table(d1$SchoolChoice))
+
 m3_empty <- vglm(SchoolChoice~1, family=multinomial(refLevel = 1), reverse=TRUE, data = d1)
-1/(1+exp(-1*coefficients(m3_empty)))
+summary(m3_empty)
+
+1/(1+exp(-1*coefficients(m3_empty)))#from logodds to probs
 .248/(.659+.248)
 .093/(.659+0.093)
 
@@ -97,27 +100,9 @@ m3 <- vglm(SchoolChoice~1+Income_centered+Care, family = multinomial(refLevel = 
 summary(m3)
 ```
 
-
 Odds Ratios
 ```{r}
 exp(cbind(OR = coefficients(m1), confint(m1)))
 exp(cbind(OR = coefficients(m2), confint(m2)))
+exp(cbind(OR = coef(m3), confint(m3)))
 ```
-
-Multiv Wald Test of Model R2
-```{r}
-mul = glht(model=Model3PO, linfct=c("gpa3=0","parD=0","priv=0"))
-summary(POR2, test=Chisqtest()) # Joint chi-square test 
-```
-
-
-
-print("Get Yhat for specific values of predictors in fake people") 
-print("Y column = predicted yhat, Yprob = predicted probability")
-PredPO = data.frame(FP, Y=predict(object=Model3PO, newdata=FP, type="link"),
-                    Yprob=predict(object=Model3PO, newdata=FP, type="response")) 
-
-print("Rename columns into something meaningful")
-names(PredPO)[names(PredPO)=='Y.logitlink.P.Y..2..']<-'YlogitGE0'
-names(PredPO)[names(PredPO)=='Y.logitlink.P.Y..3..']<-'YlogitGE1'
-PredPO
