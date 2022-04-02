@@ -29,7 +29,6 @@ library(multcomp) # To do glht linear combinations in GLMs
 library(margins) # To get predicted values like Stata does
 library(TeachingDemos) # To create text output files
 library(dplyr)
-library(multcomp)
 ```
 
 ## Define variables for working directory and data name

@@ -30,10 +30,13 @@ library(multcomp) # To do glht linear combinations in GLMs
 library(margins) # To get predicted values like Stata does
 library(MASS) # To fit negative binomial model easily
 library(TeachingDemos) # To create text output files
+library(tidyverse)
 ```
 
 # Import homework data and add labels
+```{r}
 HW04 <- read_excel("HW04/HW04_01445225.xlsx")
+```
 
 # Here are the variable labels (not to be included in data used)
 FamilyID=   "FamilyID: Family ID"
@@ -45,22 +48,28 @@ NumFoods=   "NumFoods: Number of New Foods Tried";
 
 # Your code to center/recode predictors goes here
 
+```{r}
+HW04 <- HW04%>%
+  mutate(
+    if_any = ifelse(FoodSchool == 0, 0, 1), #any food school attendance
+    atleast1 = ifelse(if_any == 1, FoodSchool - 1, 0)#number of food school sessions attended past one
+  )
+```
 
 # Open output text file -- run this last if you want to save output
 txtStart(file=paste0(filesave,"PSQF6270_HW04_Output.txt"))
 
 # Your code to estimate models goes here
 
-Empty models
+Section 1
+
 ```{r}
 m0_p <- glm(NumFoods~1, family = poisson(link = 'log'), data = HW04)
 summary(m0_p)
 -2*logLik(m0_p); AIC(m0_p); BIC(m0_p)
 
 DDFn=400     # What SAS uses
-DDFk=DDFn-6  # What STATA uses
 sum(residuals(m0_p, type="pearson")^2)/DDFn  # SAS
-sum(residuals(ModelPoisson, type="pearson")^2)/DDFk  # STATA
 
 exp(m0_p$coefficients)
 
@@ -75,24 +84,59 @@ DevTest = -2*(logLik(m0_p)-logLik(m0_nb))
 RegPvalue = pchisq((DevTest), df=1, lower.tail=FALSE)
 MixPvalue = RegPvalue/2
 DevTest; RegPvalue; MixPvalue
-
 ```
 
+Section 2
 
+```{r}
+m1_nb <- glm.nb(NumFoods~1+HasOlder+HasYounger+if_any+atleast1+BothWork+
+                  BothWork:if_any+BothWork:atleast1,
+                link = log, data = HW04)
+summary(m1_nb)
+-2*logLik(m1_nb)
+AIC(m1_nb); BIC(m1_nb)
 
-# Close output text file
-txtStop()
+DDFn=400     # What SAS uses
+sum(residuals(m1_nb, type="pearson")^2)/DDFn  # SAS
 
-ModelPoisson = glm(data=Example3, family=poisson(link="log"),
-                   formula=aggr~1+ipv+NvC+NvS +ipv:NvC +ipv:NvS)
-summary(ModelPoisson); print("Print -2LL, AIC, and BIC")
--2*logLik(ModelPoisson); AIC(ModelPoisson); BIC(ModelPoisson)
+exp(cbind(m1_nb$coefficients))
 
-print("DF=5 Multiv Wald Test of Model -- matches SAS and STATA")
-PoissonR2 = glht(model=ModelPoisson, 
-                 linfct=c("ipv=0","NvC=0","NvS=0","ipv:NvC=0","ipv:NvS=0"))
-print(summary(PoissonR2, test=Chisqtest()), digits="8") # Joint chi-square test 
+summary(glht(m1_nb, linfct = rbind(
+  'Q16' = c(0,1,0,0,0,0,0,0),
+  'Q17' = c(0,0,1,0,0,0,0,0),
+  'Q20' = c(0,0,0,1,0,0,0,0),
+  'Q21' = c(0,0,0,1,0,0,1,0),
+  'Q22' = c(0,0,0,0,0,0,1,0),
+  'Q24' = c(0,0,0,0,1,0,0,1),
+  'Q26' = c(0,0,0,0,0,1,0,0),
+  'Q27' = c(0,0,0,0,0,1,1,0),
+  'Q28' = c(0,0,0,0,0,1,1,2),
+  'Q29' = c(0,0,0,0,0,1,1,4),
+  'Q30' = c(0,0,0,0,0,0,1,0),
+  'Q31' = c(0,0,0,0,0,0,0,1))),
+  test = adjusted('none'))
 
-print("DF=2 Multiv Wald Test of Interaction -- matches SAS and STATA")
-PoissonInt = glht(model=ModelPoisson, linfct=c("ipv:NvC=0","ipv:NvS=0"))
-print(summary(PoissonInt, test=Chisqtest()), digits="8") # Joint chi-square test
+summary(m1_nb)
+
+summary(prediction(m1_nb, type="response", at=list(HasOlder=0,HasYounger=0,if_any=0,atleast1=0,BothWork=1)))$Prediction
+
+summary(prediction(m1_nb, type="response", at=list(HasOlder=0,HasYounger=0,if_any=1,atleast1=c(0,2,4),BothWork=c(0,1))))
+```
+
+Section 3
+
+```{r}
+m1_p <- glm(NumFoods~1+HasOlder+HasYounger+if_any+atleast1+BothWork+
+                  BothWork:if_any+BothWork:atleast1, family = poisson(link = 'log'), data = HW04)
+summary(m1_p)
+-2*logLik(m1_p)
+AIC(m0_p); BIC(m0_p)
+
+DDFn=400     # What SAS uses
+sum(residuals(m1_p, type="pearson")^2)/DDFn  # SAS
+
+DevTest = -2*(logLik(m1_p)-logLik(m1_nb))
+RegPvalue = pchisq((DevTest), df=1, lower.tail=FALSE)
+MixPvalue = RegPvalue/2
+DevTest; RegPvalue; MixPvalue
+```
