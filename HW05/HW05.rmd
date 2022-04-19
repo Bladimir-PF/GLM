@@ -1,0 +1,57 @@
+---
+title: "HW05"
+author: "Geraldo B. Padilla F."
+date: "19-04-2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Set width of output and number of digits to be printed
+options("width"=120, "digits"=8)
+# Turn off stars for different alpha levels
+options(show.signif.stars=FALSE)
+
+# Use this to turn off scientific notation: 
+# "fixed notation will be preferred unless it is more than 'scipen' digits wide"
+options(scipen=9)
+
+## Packages
+```{r}
+library(readxl)
+library(expss)
+library(psych)
+library(multcomp)
+library(margins)
+library(nlme)
+library(emmeans)
+library(lavaan)
+library(TeachingDemos)
+```
+
+# Import homework data and add labels
+
+```{r}
+HW05 <- read_excel("HW05/HW05_01445225.xlsx")
+```
+
+# Here are the variable labels (not to be included in data used)
+# PersonID=   "PersonID: Person ID number"
+# Training=   "Training: Training Type 1=Pancake, 2=Crepe"
+# Experience= "Experience: Experience with Food of Training"
+# Rating1=    "Rating1: Rating of Pancakes Outcome"
+# Rating2=    "Rating2: Rating of Crepes Outcome"
+
+# Your code to stack data into long and then center/recode predictors goes here
+
+```{r}
+
+```
+
+# Your code to estimate models goes here
+
+```{r}
+
+```
