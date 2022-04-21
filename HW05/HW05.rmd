@@ -10,7 +10,7 @@ knitr::opts_chunk$set(echo = TRUE)
 ```
 
 # Set width of output and number of digits to be printed
-options("width"=120, "digits"=8)
+options("width"=120, "digits"= 6)
 # Turn off stars for different alpha levels
 options(show.signif.stars=FALSE)
 
@@ -19,7 +19,7 @@ options(show.signif.stars=FALSE)
 options(scipen=9)
 
 ## Packages
-```{r}
+```{r, message=FALSE}
 library(readxl)
 library(expss)
 library(psych)
@@ -29,15 +29,17 @@ library(nlme)
 library(emmeans)
 library(lavaan)
 library(TeachingDemos)
+library(tidyverse)
 ```
 
 # Import homework data and add labels
 
 ```{r}
-HW05 <- read_excel("HW05/HW05_01445225.xlsx")
+d1 <- read_excel('C:/Users/Lenovo/OneDrive - University of Iowa/PhD portfolio/2. Courses/2. Spring 2022/PSQF62700001 Generalized Linear Models (Lesa Hoffman)/4. Homeworks/HW05/HW05_01445225.xlsx')
 ```
 
-# Here are the variable labels (not to be included in data used)
+Here are the variable labels (not to be included in data used)
+
 # PersonID=   "PersonID: Person ID number"
 # Training=   "Training: Training Type 1=Pancake, 2=Crepe"
 # Experience= "Experience: Experience with Food of Training"
@@ -47,11 +49,101 @@ HW05 <- read_excel("HW05/HW05_01445225.xlsx")
 # Your code to stack data into long and then center/recode predictors goes here
 
 ```{r}
+d1 <- d1%>%
+  pivot_longer(Rating1:Rating2, names_to = 'ratings', values_to = 'score')
 
+d1 <- d1%>%
+  mutate(
+    group = ifelse(Training == 1 & ratings == 'Rating1', 0,
+                   ifelse(Training == 1 & ratings == 'Rating2',1,
+                          ifelse(Training == 2 & ratings == 'Rating1',2,3))),
+    rating = ifelse(ratings == 'Rating1', 1, 2),
+    )
 ```
 
 # Your code to estimate models goes here
 
-```{r}
+Section 1
 
+```{r}
+m0 <- gls(d1,method="REML", 
+              model=score~0+factor(rating),
+              correlation=corSymm(form=~rating|PersonID),
+              weights=varIdent(form=~1|rating))
+
+-2*logLik(m0)
+summary(m0)
+
+#R and RCORR matrices
+getVarCov(m0, individual="1")
+corMatrix(m0$modelStruct$corStruct)[[3]]
+
+#DV means, pairwise mean differences, and omnibus F-test
+emmeans(ref_grid(m0), pairwise~rating, adjust="none")
+joint_tests(m0)
 ```
+
+Section 2
+
+```{r}
+m1 <- gls(d1,method="REML", 
+              model=score~0+factor(group),
+              correlation=corSymm(form=~rating|PersonID),
+              weights=varIdent(form=~1|rating))
+
+-2*logLik(m1)
+summary(m1)
+
+#R and RCORR matrices
+getVarCov(m1, individual="1")
+corMatrix(m1$modelStruct$corStruct)[[3]]
+
+#DV means, pairwise mean differences, and omnibus F-test
+emmeans(ref_grid(m1), pairwise~group, adjust="none")
+joint_tests(m1)
+
+#estimate for the difference in the above between-person training effects (Q27 vs Q29) for pancake vs. crepe outcomes
+summary(glht(model=m1, df=996 , linfct=rbind(
+  "pancake vs. crepe" = c(0,-1,0,1) - c(1,0,-1,0))), test=adjusted("none"))
+```
+
+Section 3
+
+```{r}
+m2 <- gls(d1,method="REML", 
+              model=score~0+factor(group)*Experience,
+              correlation=corSymm(form=~rating|PersonID),
+              weights=varIdent(form=~1|rating))
+
+-2*logLik(m2)
+summary(m2)
+
+#R and RCORR matrices
+getVarCov(m2, individual="1")
+corMatrix(m2$modelStruct$corStruct)[[3]]
+
+#DV means, pairwise mean differences, and omnibus F-test
+emmeans(ref_grid(m2), pairwise~group, adjust="none")
+joint_tests(m2)
+
+#estimate for the difference in slopes
+summary(glht(model=m2, df=992, linfct=rbind(
+  "Q37" = c(0,0,0,0,1,0,0,0),
+  "Q39" = c(0,1/2,0,0,0,1/2,0,0),
+  "Q41" = c(0,0,0,0,0,0,0,0),
+  "Q43" = c(0,0,0,0,0,0,1,0),
+  "Q45" = c(-1,0,0,1,-1,0,0,1))),test=adjusted("none"))
+```
+
+Q41. {report} For participants trained in pancakes, enter the estimate for the difference in the effect of experience between their crepe vs. pancake outcomes	
+Q42. {report} For participants trained in pancakes, enter the standard error for the difference in the effect of experience between their crepe vs. pancake outcomes	
+Q43. {report} For participants trained in crepes when making pancakes, enter the estimate for the effect of experience	
+Q44. {report} For participants trained in crepes when making pancakes, enter the standard error for the effect of experience	
+Q45. {report} For participants trained in crepes when making crepes, enter the estimate for the effect of experience	
+Q46. {report} For participants trained in crepes when making crepes, enter the standard error for the effect of experience	
+Q47. {report} For participants trained in crepes, enter the estimate for the difference in the effect of experience between their pancake vs. crepe outcomes	
+Q48. {report} For participants trained in crepes, enter the standard error for the difference in the effect of experience between their pancake vs. crepe outcomes	
+Q49. {report} When outcome type matches training type, enter the estimate for the difference in the effect of experience between pancake vs. crepe outcomes	
+Q50. {report} When outcome type matches training type, enter the standard error for the difference in the effect of experience between pancake vs. crepe outcomes	
+Q51. {report} When outcome type does NOT match training type, enter the estimate for the difference in the effect of experience between pancake vs. crepe outcomes	
+Q52. {report} When outcome type does NOT match training type, enter the standard error for the difference in the effect of experience between pancake vs. crepe outcomes
